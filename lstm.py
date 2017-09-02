@@ -94,7 +94,7 @@ class WeightedCategoricalCrossEntropy(object):
         final_mask += w * y_p * y_t
     return K.categorical_crossentropy(y_pred, y_true) * final_mask
 
-def lstm_model(input_dim, output_dim, seq_len, weights, two_layers, hidden=128, dropout=0.0, lr=0.1):
+def lstm_model(input_dim, output_dim, seq_len, two_layers, hidden=128, dropout=0.0, lr=0.1):
   model = Sequential()
   layers = {'input': input_dim, 'hidden': hidden, 'output': output_dim}
 
@@ -195,7 +195,7 @@ if __name__ == '__main__':
       os.makedirs(output_dir)
 
     model = lstm_model(input_dim, label_dim, sl, \
-      class_weights, two_layers, hidden=hls, dropout=dr, lr=lr)
+      two_layers, hidden=hls, dropout=dr, lr=lr)
 
     print('Preparing sequences... Length = {}'.format(sl))
 
