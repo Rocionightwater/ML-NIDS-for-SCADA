@@ -1,4 +1,4 @@
-# ML-techniques-for-NIDS
+# Machine learning techniques for Intrusion Detection in SCADA Systems
 
 In this work, we aim at developing a NIDS (Network Intrusion Detection System) that detects attacks targeting SCADA systems, in a concrete industrial used case scenario.In order to achieve this goal, various machine learning approaches, such as Support Vector Machines (SVMs) and Random Forest (RF), are used to build this intrusion detection system along with a deep learning algorithm called Long Short Term Memory (LSTM).
 
