@@ -48,53 +48,7 @@ def make_sequences(Xs, Ys, seqlen, step = 1):
     Yseq.append(Ys[i: i+seqlen])
   return np.array(Xseq), np.array(Yseq)
 
-class WeightedBinaryCrossEntropy(object):
-
-  def __init__(self, weights):
-    pos_ratio = weights[0] / (weights[0] + weights[1])
-    self.pos_ratio = tf.constant(pos_ratio, tf.float32)
-    self.weights = tf.constant(weights[1], tf.float32)
-    self.__name__ = 'w_binary_crossentropy({0})'.format(pos_ratio)
-
-  def __call__(self, y_true, y_pred):
-    return self.weighted_binary_crossentropy(y_true, y_pred)
-
-  def weighted_binary_crossentropy(self, y_true, y_pred):
-    # Transform to logits
-    epsilon = tf.convert_to_tensor(K.common._EPSILON, y_pred.dtype.base_dtype)
-    y_pred = tf.clip_by_value(y_pred, epsilon, 1 - epsilon)
-    y_pred = tf.log(y_pred / (1 - y_pred))
-
-    cost = tf.nn.weighted_cross_entropy_with_logits(y_true, y_pred, self.weights)
-    return K.mean(cost * self.pos_ratio, axis=-1)
-
-class WeightedCategoricalCrossEntropy(object):
-
-  def __init__(self, weights):
-    nb_cl = len(weights)
-    self.weights = np.ones((nb_cl, nb_cl))
-    for class_idx, class_weight in weights.items():
-      self.weights[0][class_idx] = class_weight
-      self.weights[class_idx][0] = class_weight
-    self.__name__ = 'w_categorical_crossentropy'
-
-  def __call__(self, y_true, y_pred):
-    return self.w_categorical_crossentropy(y_true, y_pred)
-
-  def w_categorical_crossentropy(self, y_true, y_pred):
-    nb_cl = len(self.weights)
-    final_mask = K.zeros_like(y_pred[..., 0])       # 2D -> [?],     3D -> [?, seq]
-    y_pred_max = K.max(y_pred, axis=-1)             # 2D -> [?],     3D -> [?, seq]
-    y_pred_max = K.expand_dims(y_pred_max, axis=-1) # 2D -> [?, 1],  3D -> [?, seq, 1]
-    y_pred_max_mat = K.equal(y_pred, y_pred_max)    # 2D -> [?, nc], 3D -> [?, seq, nc]
-    for c_p, c_t in itertools.product(range(nb_cl), range(nb_cl)):
-        w = K.cast(self.weights[c_t, c_p], K.floatx())     # scalar
-        y_p = K.cast(y_pred_max_mat[..., c_p], K.floatx()) # 2D -> [?], 3D -> [?, seq]
-        y_t = K.cast(y_pred_max_mat[..., c_t], K.floatx()) # 2D -> [?], 3D -> [?, seq]
-        final_mask += w * y_p * y_t
-    return K.categorical_crossentropy(y_pred, y_true) * final_mask
-
-def lstm_model(input_dim, output_dim, seq_len, weights, two_layers, hidden=128, dropout=0.0, lr=0.1):
+def lstm_model(input_dim, output_dim, seq_len, two_layers, hidden=128, dropout=0.0, lr=0.1):
   model = Sequential()
   layers = {'input': input_dim, 'hidden': hidden, 'output': output_dim}
 
@@ -195,7 +149,7 @@ if __name__ == '__main__':
       os.makedirs(output_dir)
 
     model = lstm_model(input_dim, label_dim, sl, \
-      class_weights, two_layers, hidden=hls, dropout=dr, lr=lr)
+      two_layers, hidden=hls, dropout=dr, lr=lr)
 
     print('Preparing sequences... Length = {}'.format(sl))
 
@@ -228,4 +182,3 @@ if __name__ == '__main__':
       # )
       for k,v in h.history.items():
         f.write(k + ':' + ','.join(map(str, v)) + '\n')
-
