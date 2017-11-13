@@ -11,6 +11,8 @@ from keras.optimizers import RMSprop, Adam
 import keras.callbacks
 from keras.backend.tensorflow_backend import set_session
 import os, argparse, itertools
+from sklearn.utils import shuffle
+from sklearn.model_selection import StratifiedShuffleSplit
 import sys
 from operator import itemgetter
 from sklearn.metrics import classification_report,confusion_matrix
@@ -80,14 +82,16 @@ if __name__ == '__main__':
   dataset_filenames = map(lambda x: os.path.join(dataset_dir, x), dataset_filenames)
   X_train, X_valid, X_test, Y_train, Y_valid, Y_test = map(np.load, dataset_filenames)
 
-  X = np.concatenate((X_train[2:],X_valid,X_test))
-  Y = np.concatenate((Y_train[2:],Y_valid,Y_test))
+  X = np.concatenate((X_train,X_valid,X_test))
+  Y = np.concatenate((Y_train,Y_valid,Y_test))
 
-  X = np.stack(np.split(X, 68656))
-  Y = np.stack(np.split(Y, 68656))
+  X = np.stack(np.split(X, 68657))
+  Y = np.stack(np.split(Y, 68657))
 
-  X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.6, test_size=0.4, random_state=42)
-  X_valid, X_test, Y_valid, Y_test = train_test_split(X_test, Y_test, train_size = 0.5, test_size=0.5, random_state=42)
+  X, Y = shuffle(X, Y, random_state=42)
+  
+  X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.8, test_size=0.2,random_state=42)
+  X_train, X_valid, Y_train, Y_valid = train_test_split(X, Y, train_size = 0.75, test_size=0.25,random_state=42)
 
   X_train = X_train.reshape((-1,) + X_train.shape[2:])
   Y_train = Y_train.reshape((-1,) + Y_train.shape[2:])
@@ -97,6 +101,8 @@ if __name__ == '__main__':
   Y_test  = Y_test.reshape((-1,) + Y_test.shape[2:])
 
   print(X_train.shape, Y_train.shape)
+  print(X_valid.shape, Y_valid.shape)
+  print(X_test.shape, Y_test.shape)
 
   n_label, label_dim = Y_train.shape
   sums = np.sum(Y_train, axis=0)
@@ -111,13 +117,13 @@ if __name__ == '__main__':
   iters = flags.iters
   print('Number of iterations is: {}'.format(iters))
 
-  learning_rate = lambda: 10 ** np.random.uniform(-2, -1)
-  sequence_length = lambda: int(1 * np.random.uniform(4, 4))
-  hidden_layer_size = lambda: int(2 ** np.random.uniform(6, 8))
-  batch_size = lambda: int(2 ** np.random.uniform(6, 7))
-  dropout = lambda: np.random.uniform(0.0, 0.4)
-  step = lambda: 1 + int(2 * np.random.uniform(0,0))
-  n_epochs = lambda: 10
+  learning_rate = lambda: 0.008051735511066664
+  sequence_length = lambda: 4
+  hidden_layer_size = lambda: 151
+  batch_size = lambda: 77
+  dropout = lambda: 0.19019656238849963
+  step = lambda: 1
+  n_epochs = lambda: 50
   #two_layers = lambda: False
   two_layers = lambda: bool(np.random.choice(2))
   
