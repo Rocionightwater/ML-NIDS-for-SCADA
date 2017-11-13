@@ -91,7 +91,7 @@ if __name__ == '__main__':
   X, Y = shuffle(X, Y, random_state=42)
   
   X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.8, test_size=0.2,random_state=42)
-  X_train, X_valid, Y_train, Y_valid = train_test_split(X, Y, train_size = 0.75, test_size=0.25,random_state=42)
+  X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, train_size = 0.75, test_size=0.25,random_state=42)
 
   X_train = X_train.reshape((-1,) + X_train.shape[2:])
   Y_train = Y_train.reshape((-1,) + Y_train.shape[2:])
