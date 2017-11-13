@@ -117,13 +117,13 @@ if __name__ == '__main__':
   iters = flags.iters
   print('Number of iterations is: {}'.format(iters))
 
-  learning_rate = lambda: 0.008051735511066664
-  sequence_length = lambda: 4
-  hidden_layer_size = lambda: 151
-  batch_size = lambda: 77
-  dropout = lambda: 0.19019656238849963
-  step = lambda: 1
-  n_epochs = lambda: 50
+  learning_rate = lambda: 10 ** np.random.uniform(-2, -1)
+  sequence_length = lambda: int(1 * np.random.uniform(4, 4))
+  hidden_layer_size = lambda: int(2 ** np.random.uniform(6, 8))
+  batch_size = lambda: int(2 ** np.random.uniform(6, 7))
+  dropout = lambda: np.random.uniform(0.0, 0.4)
+  step = lambda: 1 + int(2 * np.random.uniform(0,0))
+  n_epochs = lambda: 10
   #two_layers = lambda: False
   two_layers = lambda: bool(np.random.choice(2))
   
