@@ -43,7 +43,7 @@ class ReportMetric(keras.callbacks.Callback):
 
 def make_sequences(Xs, Ys, seqlen, step = 1):
   Xseq, Yseq = [], []
-  for i in range(0, Xs.shape[0] - seqlen, step):
+  for i in range(0, Xs.shape[0] - seqlen + 1, step):
     Xseq.append(Xs[i: i+seqlen])
     Yseq.append(Ys[i: i+seqlen])
   return np.array(Xseq), np.array(Yseq)
@@ -80,8 +80,8 @@ if __name__ == '__main__':
   dataset_filenames = map(lambda x: os.path.join(dataset_dir, x), dataset_filenames)
   X_train, X_valid, X_test, Y_train, Y_valid, Y_test = map(np.load, dataset_filenames)
 
-  X = np.concatenate((X_train[2:],X_valid,X_test[:-2]))
-  Y = np.concatenate((Y_train[2:],Y_valid,Y_test[:-2]))
+  X = np.concatenate((X_train[2:],X_valid,X_test))
+  Y = np.concatenate((Y_train[2:],Y_valid,Y_test))
 
   X = np.stack(np.split(X, 68656))
   Y = np.stack(np.split(Y, 68656))
