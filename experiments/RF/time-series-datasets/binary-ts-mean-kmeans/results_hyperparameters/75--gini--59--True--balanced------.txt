@@ -1,0 +1,13 @@
+Label dimension is: 1
+Input dimension is: 164776
+max_features: None
+Accuray training data = 0.99993931155
+Accuray validation data = 0.947018661812
+             precision    recall  f1-score   support
+
+        0.0     0.9570    0.9760    0.9664     42917
+        1.0     0.9078    0.8434    0.8744     12008
+
+avg / total     0.9463    0.9470    0.9463     54925
+
+--- 460.977502822876 seconds ---

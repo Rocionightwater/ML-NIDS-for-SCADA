@@ -1,0 +1,12 @@
+Label dimension is: 2
+Input dimension is: 41193
+Accuracy training data = 0.810356128468
+Accuracy validation data = 0.794567433731
+             precision    recall  f1-score   support
+
+        0.0     0.9393    0.7867    0.8563     10682
+        1.0     0.5239    0.8220    0.6399      3050
+
+avg / total     0.8470    0.7946    0.8082     13732
+
+--- Training took 593.0277273654938 seconds ---
