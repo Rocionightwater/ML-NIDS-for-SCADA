@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 from keras.models import Sequential
-from keras.layers import TimeDistributed, Dense, Dropout,Activation
+from keras.layers import TimeDistributed, Dense, Dropout,Activation, Bidirectional
 from keras.layers import Embedding
 from keras.layers import LSTM
 from keras.utils import np_utils
@@ -9,6 +9,7 @@ from keras.regularizers import l2
 from sklearn.model_selection import train_test_split
 from keras.optimizers import RMSprop, Adam
 import keras.callbacks
+from keras.callbacks import ReduceLROnPlateau
 from keras.backend.tensorflow_backend import set_session
 import os, argparse, itertools
 from sklearn.utils import shuffle
@@ -50,13 +51,12 @@ def make_sequences(Xs, Ys, seqlen, step = 1):
     Yseq.append(Ys[i: i+seqlen])
   return np.array(Xseq), np.array(Yseq)
 
-def lstm_model(input_dim, output_dim, seq_len, two_layers, hidden=128, dropout=0.0, lr=0.1):
+def lstm_model(input_dim, output_dim, seq_len, hidden=128, dropout=0.0, lr=0.1):
   model = Sequential()
   layers = {'input': input_dim, 'hidden': hidden, 'output': output_dim}
-
-  model.add(LSTM(layers['hidden'], return_sequences=True,
-    input_shape=(seq_len, layers['input'])
-  ))
+  
+  model.add(Bidirectional(LSTM(layers['input'], return_sequences=True),
+    merge_mode='concat', input_shape=(seq_len, layers['input'])))
   model.add(Dropout(dropout))
 
   activation = 'softmax' if output_dim > 1 else 'sigmoid'
@@ -76,29 +76,17 @@ if __name__ == '__main__':
 
   dataset_dir = flags.dataset
   dataset_filenames = [
-    'Xs_train.npy', 'Xs_val.npy', 'Xs_test.npy',
-    'Ys_train.npy', 'Ys_val.npy', 'Ys_test.npy'
+    'Xs_train.npy', 'Xs_val.npy', 'Xs_test.npy', 'Xs_train_val.npy','Xs_train_test.npy',
+    'Ys_train.npy', 'Ys_val.npy', 'Ys_test.npy', 'Ys_train_val.npy', 'Ys_train_test.npy'
   ]
   dataset_filenames = map(lambda x: os.path.join(dataset_dir, x), dataset_filenames)
-  X_train, X_valid, X_test, Y_train, Y_valid, Y_test = map(np.load, dataset_filenames)
-
-  X = np.concatenate((X_train,X_valid,X_test))
-  Y = np.concatenate((Y_train,Y_valid,Y_test))
-
-  X = np.stack(np.split(X, 68657))
-  Y = np.stack(np.split(Y, 68657))
-
-  X, Y = shuffle(X, Y, random_state=42)
+  X_train, X_valid, X_test, Xs_train_val, Xs_train_test, Y_train, Y_valid, Y_test, Ys_train_val, Ys_train_test  = map(np.load, dataset_filenames)
   
-  X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.8, test_size=0.2,random_state=42)
-  X_train, X_valid, Y_train, Y_valid = train_test_split(X_train, Y_train, train_size = 0.75, test_size=0.25,random_state=42)
-
-  X_train = X_train.reshape((-1,) + X_train.shape[2:])
-  Y_train = Y_train.reshape((-1,) + Y_train.shape[2:])
-  X_valid = X_valid.reshape((-1,) + X_valid.shape[2:])
-  Y_valid = Y_valid.reshape((-1,) + Y_valid.shape[2:])
-  X_test  = X_test.reshape((-1,) + X_test.shape[2:])
-  Y_test  = Y_test.reshape((-1,) + Y_test.shape[2:])
+  # If you are evaluating the test set, uncomment the following lines
+  # X_train = Xs_train_val
+  # Y_train = Ys_train_val
+  # X_test = Xs_train_test
+  # Y_test = Ys_train_test
 
   print(X_train.shape, Y_train.shape)
   print(X_valid.shape, Y_valid.shape)
@@ -116,16 +104,13 @@ if __name__ == '__main__':
 
   iters = flags.iters
   print('Number of iterations is: {}'.format(iters))
-
-  learning_rate = lambda: 10 ** np.random.uniform(-2, -1)
-  sequence_length = lambda: int(1 * np.random.uniform(4, 4))
+  learning_rate = lambda: 10 ** np.random.uniform(-3, -1)
+  sequence_length = lambda: np.random.choice([4])
   hidden_layer_size = lambda: int(2 ** np.random.uniform(6, 8))
-  batch_size = lambda: int(2 ** np.random.uniform(6, 7))
-  dropout = lambda: np.random.uniform(0.0, 0.4)
-  step = lambda: 1 + int(2 * np.random.uniform(0,0))
-  n_epochs = lambda: 10
-  #two_layers = lambda: False
-  two_layers = lambda: bool(np.random.choice(2))
+  batch_size = lambda: int(2 ** np.random.uniform(6, 8))
+  dropout = lambda: np.random.uniform(0.0, 0.2)
+  step = lambda: 4
+  n_epochs = lambda: 50
   
   ranges = [
     learning_rate,
@@ -134,8 +119,7 @@ if __name__ == '__main__':
     sequence_length,
     dropout,
     hidden_layer_size,
-    step,
-    two_layers
+    step
   ]
 
   with open(os.path.join(dataset_dir, 'aggregate.txt'), 'w') as f:
@@ -144,7 +128,7 @@ if __name__ == '__main__':
   for iterations in range(iters):
     #p() is calling all functions in the list
     hyperparams = [p() for p in ranges]
-    (lr, bs, ne, sl, dr, hls, step, two_layers) = hyperparams
+    (lr, bs, ne, sl, dr, hls, step) = hyperparams
     hparams = ','.join(map(str, hyperparams))
 
     print('New hyperparameters setting:')
@@ -155,14 +139,17 @@ if __name__ == '__main__':
       os.makedirs(output_dir)
 
     model = lstm_model(input_dim, label_dim, sl, \
-      two_layers, hidden=hls, dropout=dr, lr=lr)
+      hidden=hls, dropout=dr, lr=lr)
 
     print('Preparing sequences... Length = {}'.format(sl))
 
-    #Shuffle and Split data
-    X_train_seq, Y_train_seq = make_sequences(X_train, Y_train, sl, sl)
-    X_valid_seq, Y_valid_seq = make_sequences(X_valid, Y_valid, sl, sl)
-    X_test_seq,  Y_test_seq  = make_sequences(X_test,  Y_test,  sl, sl)
+    X_train_seq, Y_train_seq = make_sequences(X_train, Y_train, sl, step)
+    X_valid_seq, Y_valid_seq = make_sequences(X_valid, Y_valid, sl, step)
+    X_test_seq,  Y_test_seq  = make_sequences(X_test,  Y_test,  sl, step)
+
+    print(X_train_seq.shape,Y_train_seq.shape)
+    print(X_valid_seq.shape,Y_valid_seq.shape)
+    print(X_test_seq.shape, Y_test_seq.shape)
 
     output_file = os.path.join(output_dir, '-'.join(map(str, hyperparams)) + '.txt')
     with open(output_file, 'w') as f:
@@ -175,16 +162,21 @@ if __name__ == '__main__':
 
       smcb = keras.callbacks.ModelCheckpoint(chpt_filepath)
       tbcb = keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0, write_graph=True)
-      rmcb = ReportMetric(label_dim, bs, f)      
+      rmcb = ReportMetric(label_dim, bs, f) 
+
+      reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
+                              patience=3, min_lr=0.001)
 
       h = model.fit(X_train_seq, Y_train_seq, \
         validation_data=(X_valid_seq, Y_valid_seq), batch_size=bs, epochs=ne, \
-        callbacks=[tbcb, smcb, rmcb]
+        callbacks=[tbcb, smcb, rmcb, reduce_lr]
       )
+
+      # If you are evaluating the test set, uncomment the following lines and comment the previous one
 
       # h = model.fit(X_train_seq, Y_train_seq, \
       #   validation_data=(X_test_seq, Y_test_seq), batch_size=bs, epochs=ne, \
-      #   callbacks=[tbcb, smcb, rmcb]
+      #   callbacks=[tbcb, smcb, rmcb, reduce_lr]
       # )
       for k,v in h.history.items():
         f.write(k + ':' + ','.join(map(str, v)) + '\n')
