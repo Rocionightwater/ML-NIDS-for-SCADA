@@ -9,7 +9,6 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from keras.utils import np_utils
 
-
 class MaskedStandardScaler:
 
   def fit_transform(self, Xs):

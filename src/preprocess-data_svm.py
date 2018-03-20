@@ -10,7 +10,6 @@ from sklearn.mixture import GaussianMixture
 from keras.utils import np_utils
 from sklearn.model_selection import StratifiedShuffleSplit
 
-
 class MaskedStandardScaler:
     
     def fit_transform(self, Xs):
