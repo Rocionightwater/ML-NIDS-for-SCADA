@@ -14,6 +14,7 @@ from sklearn.metrics import classification_report, accuracy_score
 import time
 import scipy
 
+
 if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='Run SVM on a preprocessed dataset')

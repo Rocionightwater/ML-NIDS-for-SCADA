@@ -14,6 +14,7 @@ from sklearn.metrics import classification_report, accuracy_score,confusion_matr
 import time
 import scipy
 
+
 def main():
   start_time = time.time()
   parser = argparse.ArgumentParser(description='Run RF on a preprocessed dataset')
