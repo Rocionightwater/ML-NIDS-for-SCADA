@@ -6,3 +6,15 @@ These pre-processing files were implemented to work with a Gas Pipeline Control 
 
 https://sites.google.com/a/uah.edu/tommy-morris-uah/ics-data-sets
 http://www.ece.uah.edu/~thm0009/icsdatasets/IanArffDataset.arff
+
+If you want to cite our work, please use the following BibTex entry:
+
+```
+@inproceedings{lopez:2018:inproceedings:scada-ml,
+  author    = {Lopez Perez, Rocio and Adamsky, Florian and Soua, Ridha and Engel Thomas},
+  title     = {{Machine Learning for Reliable Network Attack Detection in SCADA Systems}}
+  publisher = {{IEEE}},
+  year      = {2018},
+  booktitle = {Proceedings of the 17th IEEE International Conference On Trust, Security And Privacy In Computing And Communications (IEEE TrustCom-18)}
+}
+```
