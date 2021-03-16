@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 import numpy as np
-from keras.models import Sequential
-from keras.layers import TimeDistributed, Dense, Dropout,Activation, Bidirectional
-from keras.layers import Embedding
-from keras.layers import LSTM
-from keras.utils import np_utils
-from keras.regularizers import l2
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import TimeDistributed, Dense, Dropout,Activation, Bidirectional
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.regularizers import l2
 from sklearn.model_selection import train_test_split
-from keras.optimizers import RMSprop, Adam
-import keras.callbacks
-from keras.callbacks import ReduceLROnPlateau
-from keras.backend.tensorflow_backend import set_session
+from tensorflow.keras.optimizers import RMSprop, Adam
+import tensorflow.keras.callbacks
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 import os, argparse, itertools
 from sklearn.utils import shuffle
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -18,25 +16,23 @@ import sys
 from operator import itemgetter
 from sklearn.metrics import classification_report,confusion_matrix
 import tensorflow as tf
-import keras.backend as K
+import tensorflow.keras.backend as K
 
-class ReportMetric(keras.callbacks.Callback):
+class ReportMetric(tensorflow.keras.callbacks.Callback):
 
-  def __init__(self, label_dim, bs, file):
+  def __init__(self, valid_data, label_dim, bs, file):
+    self.valid_data = valid_data
     self.label_dim = label_dim
     self.bs = bs
     self.file = file
 
   def on_epoch_end(self, batch, logs={}):
     if self.label_dim != 1:
-      predict = self.model.predict(self.validation_data[0], batch_size=self.bs, verbose=1)
-      predict = np.asarray(predict)
-      Y_pred = np.argmax(predict, axis=2).reshape(-1)
-      Y_true = np.argmax(self.validation_data[1], axis=2).reshape(-1)
+      Y_pred = np.argmax(model.predict(self.valid_data[0], batch_size=self.bs, verbose=1), axis=-1).reshape(-1)
+      Y_true = np.argmax(self.valid_data[1], axis=2).reshape(-1)
     else:
-      predict = model.predict_classes(self.validation_data[0], batch_size=self.bs, verbose=1)
-      Y_pred = predict.reshape(-1)
-      Y_true = self.validation_data[1].reshape(-1)
+      Y_pred = (model.predict(self.valid_data[0], batch_size=self.bs, verbose=1) > 0.5).astype("int32").reshape(-1)
+      Y_true = self.valid_data[1].reshape(-1)
 
     report = classification_report(Y_true, Y_pred,digits=4)
     conf_matrix  = confusion_matrix(Y_true, Y_pred)
@@ -160,9 +156,10 @@ if __name__ == '__main__':
       
       chpt_filepath = os.path.join(log_dir, 'weights.{epoch:02d}-{val_loss:.2f}.hdf5')
 
-      smcb = keras.callbacks.ModelCheckpoint(chpt_filepath)
-      tbcb = keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0, write_graph=True)
-      rmcb = ReportMetric(label_dim, bs, f) 
+      smcb = tensorflow.keras.callbacks.ModelCheckpoint(chpt_filepath)
+      tbcb = tensorflow.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0, write_graph=True)
+      valid_data = (X_valid_seq, Y_valid_seq)
+      rmcb = ReportMetric(valid_data, label_dim, bs, f) 
 
       reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2,
                               patience=3, min_lr=0.001)
