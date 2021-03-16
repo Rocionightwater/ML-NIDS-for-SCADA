@@ -73,8 +73,8 @@ def main():
     print('Input dimension test data is: {}'.format(input_test))
     
 
-    ne =  np.random.random_integers(2,100)
-    md   = np.random.random_integers(2,100)
+    ne =  np.random.randint(2,100)
+    md   = np.random.randint(2,100)
 
     cr = np.random.choice(['gini'])
     cw = 'balanced'
